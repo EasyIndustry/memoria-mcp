@@ -1,0 +1,25 @@
+# MariaDB portable para memoria. Uso:  cp .env.ejemplo .env  &&  docker compose up -d
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: memoria-mariadb
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MARIADB_AUTO_UPGRADE: "1"
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci",
+              "--innodb-ft-min-token-size=3"]
+    ports:
+      - "127.0.0.1:${MEMORIA_PUERTO:-3307}:3306"     # solo local
+    volumes:
+      - datos:/var/lib/mysql
+      - ./memoria/sql:/memoria-sql:ro
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  datos:
